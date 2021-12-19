@@ -11,7 +11,7 @@ from requests import get
 document = Document()
 document.add_heading('Расписание Богослужений') # Izhitsa 36
 document.add_heading('Седмица -я по Пятидесятнице', level=2) # Izhitsa 24 bold
-table = document.add_table(rows=30, cols=4)
+table = document.add_table(rows=10, cols=4)
 cell = table.cell(0, 0)
 cell.text = 'Дата'
 cell = table.cell(0, 1)
@@ -20,15 +20,19 @@ cell = table.cell(0, 2)
 cell.text = 'Время'
 cell = table.cell(0, 3)
 cell.text = 'Богослужение'
-
-a = [20,21,22,23,24,25,26]
+c = 1
+a = [5,6,7,8]
 for day in a:
-    today = str('2021-12-')+str(day)
+    today = str('2022-01-')+str(day)
     href = get(r'http://www.patriarchia.ru/bu/'+today)
     soup = BeautifulSoup(href.text, 'html.parser')
     p = soup.p.string
-    print(p)
-    paragraph = document.add_paragraph(p)
+    c = c + 1
+    r = 1
+    cell =  table.cell(c, r)
+    cell.text = str(p)
+
+#    paragraph = document.add_paragraph(p)
 
 # Программа должна исходя из текущей даты - метод
 # и выбранных дней богослужений - input + метод date
