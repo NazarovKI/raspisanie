@@ -1,10 +1,9 @@
-# Получает имена святых в честь кого служба по дате
+# Программа получает имена святых в честь кого служба исходя из даты
+# Ближайшего Воскресения (с воскресения в церкви начинается неделя, оно так
+# и называется - неделя. И ложится в основу имени и номера последующей седмицы
 # crummy.com/software/BeautifulSoup/bs4/doc.ru/bs4ru.html#id18
-
-
-
-
-
+# - документация по BeautifulSoup - ядро программы, модуль который загружает
+# с сайта только нужную нам информацию
 
 import docx
 import bs4
@@ -14,51 +13,72 @@ from docx import Document
 from bs4 import BeautifulSoup
 from requests import get
 from datetime import date
+from datetime import timedelta
+
+
+# Функция возвращает поминаемых в этот день святых
+def saint(date):
+    href = get(r'http://www.patriarchia.ru/bu/'+str(date))
+    soup = BeautifulSoup(href.text,'html.parser')
+    return soup.p.string
+
+
+# Функция определяет дату следующего дня недели на выбор относительно.
+# Заданной даты. Взято https://stackoverflow.com/users/35070/phihag
+# Взято без изменений и встроено.
+def next_weekday(d, weekday):
+    days_ahead = weekday - d.weekday()
+    if days_ahead <= 0: # Target day already happened this week
+        days_ahead += 7
+    return d + datetime.timedelta(days_ahead)
+
+# Определяем русские дни недели и дату следующего воскресения
+rus_week = ('Пн.', 'Вт.', 'Ср.', 'Чт.', 'Пт.', 'Сб.', 'Вс.')
+next_sunday = next_weekday(date.today(), 6) # 0 = Monday, 1=Tuesday, 2=Wednesday...
+
+
+print(next_sunday.strftime("%d.%m.%y")+'\n'+rus_week[next_sunday.weekday()])
+saint_of_sunday = saint (next_sunday)
+print (saint_of_sunday)
+
+
+# Создаём документ, заголовок, подзаголовок.
 document = Document()
 document.add_heading('Расписание Богослужений') # Izhitsa 36
-sedmica = 30
-document.add_heading('Седмица'+str( sedmica)+ '-я по Пятидесятнице', level=2) # Izhitsa 24 bold
-table = document.add_table(rows=10, cols=4)
-cell = table.cell(0, 0)
-cell.text = 'Дата'
-cell = table.cell(0, 1)
-cell.text = 'Поминаемые святые'
-cell = table.cell(0, 2)
-cell.text = 'Время'
-cell = table.cell(0, 3)
-cell.text = 'Богослужение'
+heading = saint_of_sunday.replace(' Неделя', 'Седмица').split('.',2)
+document.add_heading(heading[1], level=2) # Izhitsa 24 bold
 
-def next_weekday(d, weekday): 
-    days_ahead = weekday - d.weekday() 
-    if days_ahead <= 0: # Target day already happened this week
-        days_ahead += 7 
-    return d + datetime.timedelta(days_ahead) 
-d = date.today()
-next_monday = next_weekday(d, 0) # 0 = Monday, 1=Tuesday, 2=Wednesday... 
-print(next_monday)
 
-c = 0
-a = [4,5,6,7,8]
-for day in a:
-#    today = str('2021-12-')+str(day)
-    href = get(r'http://www.patriarchia.ru/bu/'+str(next_monday))
-    soup = BeautifulSoup(href.text, 'html.parser')
-    p = soup.p.string
-    c = c + 1
-    r = 1
-    cell =  table.cell(c, r)
-    cell.text = str(p)
-    
-    print (p)
-#    paragraph = document.add_paragraph(p)
+# Создаём таблицу и заголовок таблицы.
+table = document.add_table(rows=8, cols=4)
+heading_cells = table.rows[0].cells
+heading_cells[0].text = 'Дата'
+heading_cells[1].text = 'Поминаемые святые'
+heading_cells[2].text = 'Время'
+heading_cells[3].text = 'Богослужение'
 
-# Программа должна исходя из текущей даты - метод
-# и выбранных дней богослужений - input + метод date
-# определять соответствие выбранных дней недели предстоящей дате
-# делать запросы на святых по предстоящим датам (шт.)
-# затем сохранять в таблицу
 
-document.save('Седмица'+str(sedmica)+'по Пятидесятнице.docx')
-#Замена 'Свт. ' 'Мч. ' 'Прп. ' 'Вмч. ' 'Сщмч. ' 'митр. ' пробела на ;&nbsp
-# if len(p) < 56 p = p+b
-#document.save('test.docx')
+# Получаем данные для таблицы
+week = [1,2,3,4,5,6,7]
+for day in week:
+    day_ = date(2022,1,2)+timedelta(day)
+    saint_of_day = saint (day_)
+    row = table.rows[day]
+    row.cells[0].text = str(day_.strftime("%d.%m.%y")+'\n'+rus_week[day_.weekday()])
+    row.cells[1].text = saint (day_)
+    row.cells[2].text = '9:00'
+    row.cells[3].text = 'Божественная Литургия'
+
+
+# Помещаем данные в строку 1 по ячейкам
+row = table.rows[1]
+
+
+# Прочитываем последовательно таблицу
+for row in table.rows:
+    for cell in row.cells:
+        print(cell.text)
+
+# Сохраняем документ
+filename = heading[1].split(',')
+document.save(str(filename[0])+'.docx')
