@@ -5,24 +5,21 @@
 # - документация по BeautifulSoup - ядро программы, модуль который загружает
 # с сайта только нужную нам информацию
 
-import docx
+# import docx
 import bs4
 import requests
 import datetime
-from docx import Document
+# from docx import Document
 from bs4 import BeautifulSoup
 from requests import get
 from datetime import date
 from datetime import timedelta
-
 
 # Функция возвращает поминаемых в этот день святых
 def saint(date):
     href = get(r'http://www.patriarchia.ru/bu/'+str(date))
     soup = BeautifulSoup(href.text,'html.parser')
     return soup.p.string
-
-
 
 # была одна мысль -- сделать функцию определяющую след. воскресение
 def next_sunday():
@@ -31,18 +28,17 @@ def next_sunday():
         days_ahead += 7
     return date.today() + datetime.timedelta(days_ahead)
 
-
 # была вторая мысль, которая привела к открытию:
 # str(date.today()) -- годится для постановки в функцию saint
 # str(date.today()+timedelta(5)) -- годится для постановки в цикл
 
-
-# Определяем русские дни
-rus_week = ('Пн.', 'Вт.', 'Ср.', 'Чт.', 'Пт.', 'Сб.', 'Вс.')
-print(next_sunday().strftime("%d.%m.%y")+'\n'+rus_week[next_sunday().weekday()])
-
-week = [0,1,2,3,4,5,6,7,8]
-for day in week:
-    saint_of_day = saint (next_sunday()+timedelta(day))
-    print (saint_of_day)
-
+week = [2,4,6,7] # Указываем дни недели, в которые будем служить
+with open ("Shedule.html", "a") as file:
+    for day in week:
+        date = next_sunday()+timedelta(day)
+        saint_of_day = saint (date)
+        file.write ('\n'+"<tr>"+"<td>"+date.strftime("%d.%m.%y"))
+        file.write ('\n'+"<td>"+saint_of_day+'\n')
+        file.write ('\n'+"<td>"+"χρονος")
+        file.write ('\n'+"<td>"+"bogosluzhenie")
+#with open ("endoftable.html", "a") as file:

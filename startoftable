@@ -1,0 +1,12 @@
+<table>
+        <caption>Расписание богослужений</caption>
+        <thead>
+            <tr>
+                <th scope="col">Дата</th>
+                <th scope="col">Поминаемые святые</th>
+                <th scope="col">Время</th>
+                <th scope="col">Богослужение</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
